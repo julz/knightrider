@@ -43,7 +43,7 @@ knife generate-secret the-secret -t git:github.com -t docker:docker.io | kubectl
 
 knife generate-service-account buildbot -s the-secret | kubectl apply -f -
 
-knife generate-build --service-account buildbot -s github.com/julz/myapp -t kaniko | kubectl apply -f -
+knife generate-build mybuild --service-account buildbot -s github.com/julz/myapp -t kaniko | kubectl apply -f -
 ~~~~
 
 # Anything else?
