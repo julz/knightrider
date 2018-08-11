@@ -4,7 +4,7 @@ knife /kay-nife/ - a tool for knative
 
 It's a little tool for knative. Instead of being a whole CLI, it just gives you some commands to spit out yml which you can pipe to `kubectl apply`. This is kind of nice, especially for development, cos you get to see what's happening and mess with stuff.
 
-It's pronounced kay-nife. Sorry.
+It's pronounced _kay-nife_. Sorry.
 
 # Examples?
 
