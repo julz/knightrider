@@ -1,4 +1,4 @@
-knife /kay-nife/ - a tool for knative
+knife /kay-nife/ - a tool for knative yaml wrangling
 
 # What dis?
 
