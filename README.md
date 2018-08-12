@@ -30,7 +30,7 @@ ko apply -L -f <( knife generate-service hello-world github.com/julz/knife/test/
 
 NOTE: `ko apply -f` doesnt support `-` for stdin, once it does the above `<()` stuff won't be needed
 
-What the above did is generate a Knative Service YML with 'github.com/julz/knife/test/cmd/hello-world/' as the Image, and then use `ko` to turn that in to a YML with a proper docker image URI and apply the manifest. The image gets built in your local minikube's docker (this also works fine for remote clusters, just lose the `-L` in the above command) so it's _blaaazing_ fast. See [https://github.com/google/go-containerregistry/tree/master/cmd/ko](The go-containerregistry repo) for more about `ko`.
+What the above did is generate a Knative Service YML with 'github.com/julz/knife/test/cmd/hello-world/' as the Image, and then use `ko` to turn that in to a YML with a proper docker image URI and apply the manifest. The image gets built in your local minikube's docker (this also works fine for remote clusters, just lose the `-L` in the above command) so it's _blaaazing_ fast. See [the go-containerregistry repo](https://github.com/google/go-containerregistry/tree/master/cmd/ko) for more about `ko`.
 
 
 Now let's do some routing!
