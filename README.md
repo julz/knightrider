@@ -22,16 +22,6 @@ To set up a source-to-service build you can do:
 knife generate-service myservice -s github.com/foo/bar -t buildpack -a IMAGE=docker.io/busybox docker.io/busybox echo hello | kubectl apply -f -
 ~~~~
 
-Or, taking advantage of the fact that it's all yml.. you can do a super-nice local-build-and-run-on-cluster for Go programs using the fantastic `ko apply` instead of `kubectl apply`:
-
-~~~~
-ko apply -L -f <( knife generate-service hello-world github.com/julz/knife/test/cmd/hello-world )
-~~~~
-
-NOTE: `ko apply -f` doesnt support `-` for stdin, once it does the above `<()` stuff won't be needed
-
-What the above did is generate a Knative Service YML with 'github.com/julz/knife/test/cmd/hello-world/' as the Image, and then use `ko` to turn that in to a YML with a proper docker image URI and apply the manifest. The image gets built in your local minikube's docker (this also works fine for remote clusters, just lose the `-L` in the above command) so it's _blaaazing_ fast. See [the go-containerregistry repo](https://github.com/google/go-containerregistry/tree/master/cmd/ko) for more about `ko`.
-
 
 Now let's do some routing!
 
@@ -42,6 +32,18 @@ knife generate-route my-route -c configuration2:100 | kubectl apply -f -
 ~~~~
 
 Similar stuff works for most other things.
+
+# How about rapid local development?
+
+Glad you asked! You can do a super-nice local-build-and-run-on-cluster for Go programs using the fantastic `ko apply` instead of `kubectl apply`:
+
+~~~~
+ko apply -L -f <( knife generate-service hello-world github.com/julz/knife/test/cmd/hello-world )
+~~~~
+
+NOTE: `ko apply -f` doesnt support `-` for stdin, so you can't just pipe to `ko apply -f -` :-(
+
+What the above did is generate a Knative Service YML with 'github.com/julz/knife/test/cmd/hello-world/' as the Image, and then use `ko` to turn that in to a YML with a proper docker image URI and apply the manifest. The image gets built in your local minikube's docker (this also works fine for remote clusters, just lose the `-L` in the above command) so it's _blaaazing_ fast. See [the go-containerregistry repo](https://github.com/google/go-containerregistry/tree/master/cmd/ko) for more about `ko`.
 
 # What about Secrets and ServiceAccounts?
 
