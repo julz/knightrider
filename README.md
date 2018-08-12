@@ -22,6 +22,17 @@ To set up a source-to-service build you can do:
 knife generate-service myservice -s github.com/foo/bar -t buildpack -a IMAGE=docker.io/busybox docker.io/busybox echo hello | kubectl apply -f -
 ~~~~
 
+Or, taking advantage of the fact that it's all yml.. you can do a super-nice local-build-and-run-on-cluster for Go programs using the fantastic `ko apply` instead of `kubectl apply`:
+
+~~~~
+ko apply -L -f <( knife generate-service hello-world github.com/julz/knife/test/cmd/hello-world )
+~~~~
+
+NOTE: `ko apply -f` doesnt support `-` for stdin, once it does the above `<()` stuff won't be needed
+
+What the above did is generate a Knative Service YML with 'github.com/julz/knife/test/cmd/hello-world/' as the Image, and then use `ko` to turn that in to a YML with a proper docker image URI and apply the manifest. The image gets built in your local minikube's docker (this also works fine for remote clusters, just lose the `-L` in the above command) so it's _blaaazing_ fast. See [https://github.com/google/go-containerregistry/tree/master/cmd/ko](The go-containerregistry repo) for more about `ko`.
+
+
 Now let's do some routing!
 
 ~~~~
