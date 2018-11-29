@@ -19,7 +19,7 @@ kubectl knative create service my-service docker.io/my-repo/my-image
 kubectl knative create service my-service docker.io/my-repo/my-image --watch
 ~~~~
 
-# Use as a standalone binary for generating knative yml
+# Use as a standalone binary for generating knative yml
 
 If you're not using the latest kubectl, you can just install via `go get github.com/julz/knightrider/cmd/kr` and use via `kr` as described below.
 
