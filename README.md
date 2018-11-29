@@ -35,7 +35,7 @@ Or, without the piping:
 kr create build -t buildpack -a arg1=foo -a arg2=bar -s github.com/foo/bar mybuild
 ~~~~
 
-(Please remember to pronounce this "kay-nife" in your head).
+(Please remember to pronounce this "kay-nightrider create" in your head).
 
 To set up a source-to-service build you can do:
 
