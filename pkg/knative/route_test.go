@@ -3,7 +3,7 @@ package knative_test
 import (
 	"testing"
 
-	"github.com/julz/knife/knative"
+	"github.com/julz/knightrider/pkg/knative"
 	serving "github.com/knative/serving/pkg/apis/serving/v1alpha1"
 )
 

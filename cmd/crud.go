@@ -3,7 +3,9 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
@@ -11,18 +13,55 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/ghodss/yaml"
-	"github.com/julz/knife/pkg/knative"
+	"github.com/julz/knightrider/pkg/knative"
 	"github.com/spf13/cobra"
 )
 
 var repo, revision, template, serviceAccount string
+var result io.Reader
+
+func kubecmd(cmd string) *cobra.Command {
+	c := &cobra.Command{
+		Use:   cmd + " [knative object]",
+		Short: cmd,
+		PersistentPostRun: func(_ *cobra.Command, args []string) {
+			kubectl := exec.Command("kubectl", cmd, "-f", "-")
+			kubectl.Stdin = result
+			kubectl.Stdout = os.Stdout
+			kubectl.Stderr = os.Stderr
+
+			if err := kubectl.Run(); err != nil {
+				fatalF("Error: %s", err)
+			}
+		},
+	}
+
+	return c
+}
+
+var generate = &cobra.Command{
+	Use:   "generate [knative object]",
+	Short: "generate",
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		io.Copy(os.Stdout, result)
+	},
+}
+
+var rootCmds = []*cobra.Command{
+	generate,
+	kubecmd("apply"),
+	kubecmd("create"),
+	kubecmd("replace"),
+	kubecmd("patch"),
+	kubecmd("delete"),
+}
 
 var generateBuild = &cobra.Command{
-	Use:   "generate-build [name]",
-	Short: "output a build yml to stdout",
+	Use:   "build build-name",
+	Short: "build",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		printYaml(knative.NewBuild(args[0], buildOptions()...))
+		result = toYaml(knative.NewBuild(args[0], buildOptions()...))
 	},
 }
 
@@ -30,39 +69,39 @@ var templateArgs, templateEnv []string
 var single, alwaysPull bool
 
 var generateConfiguration = &cobra.Command{
-	Use:   "generate-configuration [name] [image] [args]",
-	Short: "output a configuration yml to stdout",
+	Use:   "configuration [name] [image] [args]",
+	Short: "configuration",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		printYaml(knative.NewConfiguration(args[0], configurationOptions(args[1], args[2:])...))
+		result = toYaml(knative.NewConfiguration(args[0], configurationOptions(args[1], args[2:])...))
 	},
 }
 
 var generateService = &cobra.Command{
-	Use:   "generate-service [name] [image] [args]",
-	Short: "output a service yml to stdout",
+	Use:   "service [name] [image] [args]",
+	Short: "service",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		printYaml(knative.NewRunLatestService(args[0], configurationOptions(args[1], args[2:])...))
+		result = toYaml(knative.NewRunLatestService(args[0], configurationOptions(args[1], args[2:])...))
 	},
 }
 
 var revisionTraffic, configurationTraffic []string
 
 var generateRoute = &cobra.Command{
-	Use:   "generate-route [name]",
-	Short: "output a route yml to stdout",
+	Use:   "route [name]",
+	Short: "route",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		printYaml(knative.NewRoute(args[0], routeOptions()...))
+		result = toYaml(knative.NewRoute(args[0], routeOptions()...))
 	},
 }
 
 var secretTargets []string
 
 var generateSecret = &cobra.Command{
-	Use:   "generate-secret [name]",
-	Short: "output a secret yml",
+	Use:   "secret [name]",
+	Short: "secret",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var options []knative.SecretOption
@@ -79,17 +118,17 @@ var generateSecret = &cobra.Command{
 		}
 
 		user, pass := readUserPass()
-		printYaml(knative.NewSecret(args[0], append(options, knative.WithBasicAuth(user, pass))...))
+		result = toYaml(knative.NewSecret(args[0], append(options, knative.WithBasicAuth(user, pass))...))
 	},
 }
 
 var serviceAccountSecrets []string
 var generateServiceAccount = &cobra.Command{
-	Use:   "generate-service-account [name]",
-	Short: "output a service account yml to stdout",
+	Use:   "service-account [name]",
+	Short: "service account",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		printYaml(knative.NewServiceAccount(args[0], knative.WithSecrets(serviceAccountSecrets...)))
+		result = toYaml(knative.NewServiceAccount(args[0], knative.WithSecrets(serviceAccountSecrets...)))
 	},
 }
 
@@ -122,8 +161,15 @@ func init() {
 	// serviceAccount takes a list of secret names
 	generateServiceAccount.Flags().StringSliceVarP(&serviceAccountSecrets, "secret", "s", nil, "add a secret to the generated account")
 
+	root.AddCommand(rootCmds...)
 	for _, cmd := range []*cobra.Command{generateSecret, generateServiceAccount, generateBuild, generateService, generateConfiguration, generateRoute} {
-		root.AddCommand(cmd)
+		for _, parent := range rootCmds {
+			copy := &cobra.Command{}
+			*copy = *cmd
+
+			copy.Short = fmt.Sprintf("%s a knative %s", parent.Short, cmd.Short)
+			parent.AddCommand(copy)
+		}
 	}
 }
 
@@ -196,14 +242,14 @@ func parseTrafficSpec(s string) (name, target string, percent int) {
 	return name, parts[0], percent
 }
 
-func printYaml(o interface{}) {
+func toYaml(o interface{}) io.Reader {
 	var b []byte
 	var err error
 	if b, err = yaml.Marshal(o); err != nil {
 		fatalF("Error: %s", err)
 	}
 
-	fmt.Println(string(b))
+	return strings.NewReader(string(b))
 }
 
 func toMap(args []string) map[string]string {

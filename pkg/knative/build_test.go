@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/julz/knife/knative"
+	"github.com/julz/knightrider/pkg/knative"
 	build "github.com/knative/build/pkg/apis/build/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"

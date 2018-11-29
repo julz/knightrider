@@ -8,9 +8,9 @@ import (
 )
 
 var root = &cobra.Command{
-	Use:   "knife",
-	Long:  "Knife (pronounced kaynife) is a super simple program for working with knative yml",
-	Short: `Knife is a super simple program for working with knative yml`,
+	Use:   "kr",
+	Long:  "kr  is a super simple program for working with knative yml",
+	Short: `kr is a super simple program for working with knative yml`,
 }
 
 func Execute() {
